@@ -1,4 +1,6 @@
 #include <opencv2/opencv.hpp>
+#include <chrono>
+
 
 const float gamma = 2.2;
 
@@ -21,12 +23,12 @@ cv::Mat pixel_gamma(cv::Mat img)
 		}
 	img_float.convertTo(img_float, CV_8UC1);
 	return img_float;
-
+	
 }
 
 int main() 
 {
-	cv::Mat I = cv::Mat::zeros(180, 768, CV_8UC1);
+	cv::Mat I = cv::Mat::zeros(60, 768, CV_8UC1);
 
 	for (int i = 0; i < I.rows; i++)
 	{
@@ -36,25 +38,23 @@ int main()
 		}
 	} 
 
+	auto start = std::chrono::steady_clock::now();
 	cv::Mat I_pow = pow_gamma(I);
-	cv::Mat I_pixel = pixel_gamma(I);
+	auto end = std::chrono::steady_clock::now();
+	std::chrono::duration<double> elapsed_seconds = end - start;
+	std::cout << "elapsed time: " << elapsed_seconds.count() << "s\n";
 
-	int64 t0 = cv::getTickCount();
+	start = std::chrono::steady_clock::now();
+	cv::Mat I_pixel = pixel_gamma(I);
+	end = std::chrono::steady_clock::now();
+    elapsed_seconds = end - start;
+	std::cout << "elapsed time: " << elapsed_seconds.count() << "s\n";
+
 	cv::Mat main_image = cv::Mat::zeros(I.rows * 3, I.cols, CV_8UC1);
-	double t1 = (double)cv::getTickCount();
 	I.copyTo(main_image(cv::Rect(0, I.rows * 0, I.cols, I.rows)));
-	double t2 = (double)cv::getTickCount();
 	I_pow.copyTo(main_image(cv::Rect(0, I.rows * 1, I.cols, I.rows)));
-	double t3 = (double)cv::getTickCount();
 	I_pixel.copyTo(main_image(cv::Rect(0, I.rows * 2, I.cols, I.rows)));
 
-
-	double r1 = 1000 * ((t1 - t0) / cv::getTickFrequency());
-	double r2 = 1000 * ((t2 - t1) / cv::getTickFrequency());
-	double r3 = 1000 * ((t3 - t2) / cv::getTickFrequency());
-
-	std::cout << "Gradient: " << std::setprecision(2) << r1 << " ms \n" << "Pow gamma: " << std::setprecision(2) << r2 << " ms \n"
-		<< "Pixel gamma: " << std::setprecision(2) << r3 << " ms " << std::endl;
 
 	imwrite("lab01.png", main_image);
 	imshow("lab01.png", main_image);
